@@ -44,8 +44,8 @@ class Postfix
 		$domains = WebserverBase::getVhostsToCreate();
 		foreach ($domains as $domain) {
 			FroxlorLogger::getInstanceOf()->logAction(FroxlorLogger::CRON_ACTION, LOG_INFO, 'dovecot::createVirtualHosts: creating vhost container for domain ' . $domain['id'] . ', customer ' . $domain['loginname']);
-			if ($domain['deactivated'] == '0' && $domain['customer_deactivated'] == '0' && $domain['isemaildomain'] == '1'
-				&& $domain['ssl_enabled'] == '1' && $domain['ssl'] == '1') {
+			if ($domain['deactivated'] == 0 && $domain['customer_deactivated'] == 0 && ($domain['isemaildomain'] == 1 || substr($domain['domain'],0,5) == 'mail.')
+				&& $domain['ssl_enabled'] == 1 && $domain['ssl'] == 1) {
 				$this->content .= $this->getSSLConf($domain);
 			}
 		}

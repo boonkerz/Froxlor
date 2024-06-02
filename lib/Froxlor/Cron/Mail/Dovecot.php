@@ -42,8 +42,8 @@ class Dovecot
 		$domains = WebserverBase::getVhostsToCreate();
 		foreach ($domains as $domain) {
 			FroxlorLogger::getInstanceOf()->logAction(FroxlorLogger::CRON_ACTION, LOG_INFO, 'dovecot::createVirtualHosts: creating vhost container for domain ' . $domain['id'] . ', customer ' . $domain['loginname']);
-			if ($domain['deactivated'] == '0' && $domain['customer_deactivated'] == '0' && $domain['isemaildomain'] == '1'
-				&& $domain['ssl_enabled'] == '1' && $domain['ssl'] == '1') {
+			if ($domain['deactivated'] == 0 && $domain['customer_deactivated'] == 0 && ($domain['isemaildomain'] == 1 || substr($domain['domain'],0,5) == 'mail.')
+				&& $domain['ssl_enabled'] == 1 && $domain['ssl'] == 1) {
 				$this->content .= $this->getSSLConf($domain);
 			}
 		}
@@ -73,7 +73,7 @@ class Dovecot
 
 			if($domain['ssl_cert_file'] != '') {
 				$content .= 'local_name ' . $domain['domain'] . " {\n";
-				$content .= '  ssl_cert = <' . FileDir::makeCorrectFile($domain['ssl_cert_file']) . "\n";
+				$content .= '  ssl_cert = <' . FileDir::makeCorrectFile($domain['ssl_fullchain_file']) . "\n";
 
 				if ($domain['ssl_key_file'] != '') {
 					$content .= '  ssl_key = <' . FileDir::makeCorrectFile($domain['ssl_key_file']) . "\n";

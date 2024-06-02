@@ -96,6 +96,7 @@ class DomainSSL
 
 			// initialize optional files
 			$ssl_files['ssl_ca_file'] = '';
+			$ssl_files['ssl_fullchain_file'] = '';
 			$ssl_files['ssl_cert_chainfile'] = '';
 			// set them if they are != empty
 			if ($dom_certs['ssl_ca_file'] != '') {
@@ -132,6 +133,7 @@ class DomainSSL
 			$domain['ssl_key_file'] = $ssl_files['ssl_key_file'];
 			$domain['ssl_ca_file'] = $ssl_files['ssl_ca_file'];
 			$domain['ssl_cert_chainfile'] = $ssl_files['ssl_cert_chainfile'];
+			$domain['ssl_fullchain_file'] = $ssl_files['ssl_fullchain_file'];
 		}
 
 		return;
