@@ -101,7 +101,7 @@ class Traffic extends ApiCommand implements ResourceEntity
 		$date_from = $this->getParam('date_from', true, -1);
 		$date_until = $this->getParam('date_until', true, -1);
 		$customer_traffic = $this->getBoolParam('customer_traffic', true, 0);
-		$customer_ids = $this->getAllowedCustomerIds();
+		$customer_ids = $this->getAllowedCustomerIds('traffic');
 		$result = [];
 		$params = [];
 
