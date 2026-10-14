@@ -45,6 +45,9 @@ class Validate
 
 	const REGEX_DESC_TEXT = '/^[^\0\r\n<>]*$/';
 
+	// like REGEX_DESC_TEXT but allows newlines, for textarea fields (callers normalize \r\n to \n first)
+	const REGEX_DESC_TEXT_MULTILINE = '/^[^\0\r<>]*$/';
+
 	const REGEX_YYYY_MM_DD = '/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/';
 
 	/**

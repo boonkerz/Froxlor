@@ -203,7 +203,7 @@ class HostingPlans extends ApiCommand implements ResourceEntity
 
 			// validation
 			$name = Validate::validate(trim($name), 'name', Validate::REGEX_DESC_TEXT, '', [], true);
-			$description = Validate::validate(str_replace("\r\n", "\n", $description), 'description', Validate::REGEX_DESC_TEXT);
+			$description = Validate::validate(str_replace("\r\n", "\n", $description), 'description', Validate::REGEX_DESC_TEXT_MULTILINE);
 
 			if (Settings::Get('system.mail_quota_enabled') != '1') {
 				$value_arr['email_quota'] = -1;
@@ -385,7 +385,7 @@ class HostingPlans extends ApiCommand implements ResourceEntity
 
 			// validation
 			$name = Validate::validate(trim($name), 'name', Validate::REGEX_DESC_TEXT, '', [], true);
-			$description = Validate::validate(str_replace("\r\n", "\n", $description), 'description', Validate::REGEX_DESC_TEXT);
+			$description = Validate::validate(str_replace("\r\n", "\n", $description), 'description', Validate::REGEX_DESC_TEXT_MULTILINE);
 
 			if (Settings::Get('system.mail_quota_enabled') != '1') {
 				$value_arr['email_quota'] = -1;

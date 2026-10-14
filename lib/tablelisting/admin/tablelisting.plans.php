@@ -41,10 +41,12 @@ return [
 				'label' => lng('admin.plans.name'),
 				'field' => 'name',
 				'isdefaultsearchfield' => true,
+				'callback' => [Text::class, 'escape'],
 			],
 			'p.description' => [
 				'label' => lng('admin.plans.description'),
 				'field' => 'description',
+				'callback' => [Text::class, 'escape'],
 			],
 			'p.adminname' => [
 				'label' => lng('admin.admin'),
