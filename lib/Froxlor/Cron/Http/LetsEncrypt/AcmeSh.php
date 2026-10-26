@@ -26,6 +26,7 @@
 namespace Froxlor\Cron\Http\LetsEncrypt;
 
 use Froxlor\Cron\FroxlorCron;
+use Froxlor\Cron\Mail\Sni\AcmeSanProvider;
 use Froxlor\Cron\TaskId;
 use Froxlor\Database\Database;
 use Froxlor\Domain\Domain;
@@ -79,6 +80,8 @@ class AcmeSh extends FroxlorCron
 			// Let's Encrypt cronjob is combined with regeneration of webserver configuration files.
 			// For debugging purposes you can use the --debug switch and the --force switch to run the cron manually.
 			// check whether we MIGHT need to run although there is no task to regenerate config-files
+			// mail-SNI: re-issue certificates whose mail-hostnames (e.g. mail.<domain>) need to be added/removed
+			self::scheduleMailSniReissues();
 			$issue_froxlor = self::issueFroxlorVhost();
 			$issue_domains = self::issueDomains();
 			$renew_froxlor = self::renewFroxlorVhost();
@@ -529,7 +532,19 @@ EOC;
 
 				self::validateDns($domains, $certrow['domainid'], $cronlog);
 
-				self::runAcmeSh($certrow, $domains, $cronlog, $do_force, $certrow['domainid'] == 0);
+				// mail-SNI: add mail-hostnames (e.g. mail.<domain>) which can be validated
+				$mail_sni_sans = self::getMailSniSans($certrow, $domains, $cronlog);
+				$domains = array_merge($domains, $mail_sni_sans);
+
+				$issued = self::runAcmeSh($certrow, $domains, $cronlog, $do_force, $certrow['domainid'] == 0);
+
+				if (!empty($mail_sni_sans) && ($provider = AcmeSanProvider::createDefault($cronlog)) !== null) {
+					try {
+						$provider->reportIssueResult($mail_sni_sans, $issued);
+					} catch (\Throwable $e) {
+						$cronlog->logAction(FroxlorLogger::CRON_ACTION, LOG_ERR, "[mail-sni] " . $e->getMessage());
+					}
+				}
 			} else {
 				$cronlog->logAction(FroxlorLogger::CRON_ACTION, LOG_WARNING, "Skipping Let's Encrypt generation for " . $certrow['domain'] . " due to an enabled ssl_redirect");
 				// we need another reconfigure in order to get the certificate
@@ -580,8 +595,53 @@ EOC;
 		}
 	}
 
-	private static function runAcmeSh(array $certrow, array $domains, &$cronlog = null, bool $force = false, bool $renew_hook = false)
+	/**
+	 * mail-hostnames (e.g. mail.<domain>) to add to the certificate if mail-SNI is enabled,
+	 * see \Froxlor\Cron\Mail\Sni\AcmeSanProvider
+	 */
+	private static function getMailSniSans(array $certrow, array $domains, $cronlog): array
 	{
+		// only for customer domains and only if the domain itself passed the dns validation
+		if ($certrow['domainid'] == 0 || empty($domains) || reset($domains) !== strtolower($certrow['domain'])) {
+			return [];
+		}
+		$provider = AcmeSanProvider::createDefault($cronlog);
+		if ($provider === null) {
+			return [];
+		}
+		try {
+			$sans = $provider->additionalSans((int)$certrow['domainid'], $domains);
+		} catch (\Throwable $e) {
+			// never let mail-SNI block the certificate of the website
+			$cronlog->logAction(FroxlorLogger::CRON_ACTION, LOG_ERR, "[mail-sni] " . $e->getMessage());
+			return [];
+		}
+		foreach ($sans as $san) {
+			$cronlog->logAction(FroxlorLogger::CRON_ACTION, LOG_INFO, "Adding SAN entry (mail-SNI): " . $san);
+		}
+		return $sans;
+	}
+
+	/**
+	 * mail-SNI: trigger a re-issue of certificates whose mail-hostnames have to be added or removed
+	 */
+	private static function scheduleMailSniReissues()
+	{
+		$provider = AcmeSanProvider::createDefault();
+		if ($provider !== null) {
+			try {
+				$provider->scheduleReissues(function (int $domainid) {
+					Domain::triggerLetsEncryptCSRForAliasDestinationDomain($domainid, FroxlorLogger::getInstanceOf());
+				});
+			} catch (\Throwable $e) {
+				FroxlorLogger::getInstanceOf()->logAction(FroxlorLogger::CRON_ACTION, LOG_ERR, "[mail-sni] " . $e->getMessage());
+			}
+		}
+	}
+
+	private static function runAcmeSh(array $certrow, array $domains, &$cronlog = null, bool $force = false, bool $renew_hook = false): bool
+	{
+		$cert_stored = false;
 		if (!empty($domains)) {
 			$acmesh_cmd = self::getAcmeSh() . " --server " . self::$apiserver . " --issue -d " . implode(" -d ", $domains);
 			// challenge path
@@ -630,6 +690,7 @@ EOC;
 				}
 			}
 		}
+		return $cert_stored;
 	}
 
 	public static function renewHookConfigs($cronlog)

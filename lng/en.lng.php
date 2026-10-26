@@ -1840,6 +1840,30 @@ Yours sincerely, your administrator',
 			'title' => 'Allow external domains for "allowed sender"',
 			'description' => 'If enabled, customer can enter any domain (except not owned domains on this system) as "allowed sender" for email accounts.<br>Default: off',
 		],
+		'mail_sni_enabled' => [
+			'title' => 'Enable mail-SNI (per-hostname certificates for Postfix/Dovecot)',
+			'description' => 'Postfix (SMTP/STARTTLS/SMTPS) and Dovecot (IMAP/POP3) present the certificate matching the requested hostname (SNI), e.g. <i>mail.example.com</i>, instead of the server\'s default certificate. The certificates managed by froxlor (Let\'s Encrypt or uploaded) are used if they cover the hostname, are valid and match their private key. froxlor keeps the Postfix SNI table and the Dovecot <i>local_name</i> configuration in sync with every run of the tasks-cronjob (new/changed/deleted email-domains, new or renewed certificates). Generated files are validated (<i>postfix check</i>, <i>doveconf -n</i>) and backed up before they are activated, the services are only reloaded if something changed. The default certificates of Postfix and Dovecot are not modified. Disabling the option removes the generated entries again. Diagnose with <i>bin/froxlor-cli froxlor:mail-sni status</i>.<br>Default: off',
+		],
+		'mail_sni_hostnames' => [
+			'title' => 'Mail-SNI: hostnames per email-domain',
+			'description' => 'Comma separated list of hostname prefixes which are created for every active email-domain, e.g. <i>mail</i> results in <i>mail.example.com</i>. Use <i>@</i> for the domain itself (e.g. <i>@,mail,imap,smtp</i>). The system hostname is always served by the default certificate.<br>Default: mail',
+		],
+		'mail_sni_acme' => [
+			'title' => 'Mail-SNI: add hostnames to Let\'s Encrypt certificates',
+			'description' => 'Adds the mail hostnames (e.g. <i>mail.example.com</i>) as additional name to the Let\'s Encrypt certificate of the domain - no separate certificate is requested. A hostname is only added if it resolves to an IP address of this system, the MX records of the domain do not point to external servers only and the ACME HTTP challenge for it is reachable. Existing certificates are re-issued automatically (max. 5 per cronjob run) when hostnames have to be added, or removed because they can no longer be validated. If a certificate request with mail hostnames fails, they are left out for 24 hours so the certificate of the website is never affected.<br>Default: on',
+		],
+		'mail_sni_cert_path' => [
+			'title' => 'Mail-SNI: certificate directory',
+			'description' => 'Dedicated directory (only accessible by root) where froxlor stores key and certificate chain per mail hostname, plus backups of the generated configuration files. Must not be the same as the customer SSL certificate directory.<br>Default: /etc/ssl/froxlor-mail-sni/',
+		],
+		'mail_sni_postfix_map' => [
+			'title' => 'Mail-SNI: Postfix SNI table',
+			'description' => 'Source file of the Postfix SNI table, indexed via <i>postmap -F</i> (Postfix >= 3.4). If <i>tls_server_sni_maps</i> is not set yet, froxlor sets it to this table (backup of main.cf is created); a differing existing value is never changed.<br>Default: /etc/postfix/99-froxlor.map',
+		],
+		'mail_sni_dovecot_conf' => [
+			'title' => 'Mail-SNI: Dovecot configuration file',
+			'description' => 'File for the Dovecot <i>local_name</i> blocks, has to be included by the Dovecot configuration (e.g. via <i>!include conf.d/*.conf</i>). Dovecot 2.3 and 2.4 syntax is detected automatically.<br>Default: /etc/dovecot/conf.d/99-froxlor-vhost.ssl.conf',
+		],
 		'session_allow_multiple_login' => [
 			'title' => 'Allow multiple login',
 			'description' => 'If activated a user could login multiple times.',
@@ -2088,6 +2112,10 @@ Yours sincerely, your administrator',
 			'title' => 'MDA log',
 			'description' => 'Logfile of the Mail Delivery Server',
 		],
+		'mda_reload_command' => [
+			'title' => 'MDA reload command',
+			'description' => 'Command to reload the Mail Delivery Server (e.g. Dovecot) after its configuration has been changed by froxlor (mail-SNI).<br>Default: systemctl reload dovecot',
+		],
 		'mtaserver' => [
 			'title' => 'MTA type',
 			'description' => 'Type of the Mail Transfer Agent',
@@ -2095,6 +2123,10 @@ Yours sincerely, your administrator',
 		'mtalog' => [
 			'title' => 'MTA log',
 			'description' => 'Logfile of the Mail Transfer Agent',
+		],
+		'mta_reload_command' => [
+			'title' => 'MTA reload command',
+			'description' => 'Command to reload the Mail Transfer Agent (e.g. Postfix) after its configuration has been changed by froxlor (mail-SNI).<br>Default: systemctl reload postfix',
 		],
 		'system_cronconfig' => [
 			'title' => 'Cron configuration file',

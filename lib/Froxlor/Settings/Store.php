@@ -26,6 +26,7 @@
 namespace Froxlor\Settings;
 
 use Exception;
+use Froxlor\Cron\Mail\Sni\MailSniConfig;
 use Froxlor\Cron\TaskId;
 use Froxlor\Database\Database;
 use Froxlor\Database\DbManager;
@@ -65,6 +66,16 @@ class Store
 		}
 
 		return $returnvalue;
+	}
+
+	/**
+	 * settings of the mail-SNI feature are not added by a database update step
+	 * (see \Froxlor\Cron\Mail\Sni\MailSniConfig), so make sure they exist before storing
+	 */
+	public static function storeSettingFieldMailSni($fieldname, $fielddata, $newfieldvalue)
+	{
+		MailSniConfig::ensureSettings();
+		return self::storeSettingField($fieldname, $fielddata, $newfieldvalue);
 	}
 
 	public static function storeSettingField($fieldname, $fielddata, $newfieldvalue)

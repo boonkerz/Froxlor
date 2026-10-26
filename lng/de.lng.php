@@ -1718,6 +1718,30 @@ Vielen Dank, Ihr Administrator',
 			'title' => 'Erlaube externe Domains für "Erlaubte Absendeadressen"',
 			'description' => 'Wenn aktiviert können Kunden beliebige Domains (außer diese auf diesem System, die nicht dem Kunden gehören) als "Erlaubte Absendeadressen" nutzen.<br>Standard: aus',
 		],
+		'mail_sni_enabled' => [
+			'title' => 'Mail-SNI aktivieren (Zertifikate je Hostname für Postfix/Dovecot)',
+			'description' => 'Postfix (SMTP/STARTTLS/SMTPS) und Dovecot (IMAP/POP3) liefern das zum angefragten Hostnamen (SNI) passende Zertifikat aus, z.B. für <i>mail.example.com</i>, statt des Standardzertifikats des Servers. Verwendet werden die von froxlor verwalteten Zertifikate (Let\'s Encrypt oder hochgeladen), sofern sie den Hostnamen abdecken, gültig sind und zum privaten Schlüssel passen. froxlor gleicht die Postfix-SNI-Tabelle und die Dovecot-<i>local_name</i>-Konfiguration bei jedem Lauf des Tasks-Cronjobs ab (neue/geänderte/gelöschte E-Mail-Domains, neue oder erneuerte Zertifikate). Erzeugte Dateien werden vor der Aktivierung geprüft (<i>postfix check</i>, <i>doveconf -n</i>) und gesichert, die Dienste werden nur bei Änderungen neu geladen. Die Standardzertifikate von Postfix und Dovecot werden nicht verändert. Beim Deaktivieren werden die erzeugten Einträge wieder entfernt. Diagnose mit <i>bin/froxlor-cli froxlor:mail-sni status</i>.<br>Standard: aus',
+		],
+		'mail_sni_hostnames' => [
+			'title' => 'Mail-SNI: Hostnamen je E-Mail-Domain',
+			'description' => 'Kommagetrennte Liste von Hostnamen-Präfixen, die für jede aktive E-Mail-Domain erzeugt werden, z.B. ergibt <i>mail</i> den Hostnamen <i>mail.example.com</i>. <i>@</i> steht für die Domain selbst (z.B. <i>@,mail,imap,smtp</i>). Der System-Hostname wird immer über das Standardzertifikat bedient.<br>Standard: mail',
+		],
+		'mail_sni_acme' => [
+			'title' => 'Mail-SNI: Hostnamen in Let\'s-Encrypt-Zertifikate aufnehmen',
+			'description' => 'Nimmt die Mail-Hostnamen (z.B. <i>mail.example.com</i>) als zusätzlichen Namen in das Let\'s-Encrypt-Zertifikat der Domain auf - es wird kein separates Zertifikat beantragt. Ein Hostname wird nur aufgenommen, wenn er auf eine IP-Adresse dieses Systems auflöst, die MX-Einträge der Domain nicht ausschließlich auf externe Server zeigen und die ACME-HTTP-Challenge für ihn erreichbar ist. Bestehende Zertifikate werden automatisch neu ausgestellt (max. 5 pro Cronjob-Lauf), wenn Hostnamen hinzukommen oder entfernt werden müssen, weil sie nicht mehr validierbar sind. Schlägt ein Antrag mit Mail-Hostnamen fehl, werden diese für 24 Stunden weggelassen, damit das Zertifikat der Website nie beeinträchtigt wird.<br>Standard: an',
+		],
+		'mail_sni_cert_path' => [
+			'title' => 'Mail-SNI: Zertifikatsverzeichnis',
+			'description' => 'Eigenes Verzeichnis (nur für root zugänglich), in dem froxlor Schlüssel und Zertifikatskette je Mail-Hostname sowie Sicherungen der erzeugten Konfigurationsdateien ablegt. Darf nicht das Verzeichnis der Kunden-SSL-Zertifikate sein.<br>Standard: /etc/ssl/froxlor-mail-sni/',
+		],
+		'mail_sni_postfix_map' => [
+			'title' => 'Mail-SNI: Postfix-SNI-Tabelle',
+			'description' => 'Quelldatei der Postfix-SNI-Tabelle, indiziert mit <i>postmap -F</i> (Postfix >= 3.4). Ist <i>tls_server_sni_maps</i> noch nicht gesetzt, setzt froxlor den Parameter auf diese Tabelle (Sicherung der main.cf wird angelegt); ein abweichender vorhandener Wert wird nie verändert.<br>Standard: /etc/postfix/99-froxlor.map',
+		],
+		'mail_sni_dovecot_conf' => [
+			'title' => 'Mail-SNI: Dovecot-Konfigurationsdatei',
+			'description' => 'Datei für die Dovecot-<i>local_name</i>-Blöcke, muss von der Dovecot-Konfiguration eingebunden werden (z.B. per <i>!include conf.d/*.conf</i>). Die Syntax für Dovecot 2.3 bzw. 2.4 wird automatisch erkannt.<br>Standard: /etc/dovecot/conf.d/99-froxlor-vhost.ssl.conf',
+		],
 		'session_allow_multiple_login' => [
 			'title' => 'Erlaube gleichzeitigen Login',
 			'description' => 'Wenn diese Option aktiviert ist, können sich Nutzer mehrmals gleichzeitig anmelden.',
@@ -1966,6 +1990,10 @@ Vielen Dank, Ihr Administrator',
 			'title' => 'Logdatei des MDA',
 			'description' => 'Die Logdatei des Mail Delivery Server',
 		],
+		'mda_reload_command' => [
+			'title' => 'MDA Reload-Befehl',
+			'description' => 'Befehl, um den Mail Delivery Server (z.B. Dovecot) nach einer Konfigurationsänderung durch froxlor (Mail-SNI) neu zu laden.<br>Standard: systemctl reload dovecot',
+		],
 		'mtaserver' => [
 			'title' => 'Typ des MTA',
 			'description' => 'Der eingesetzte Mail Transfer Agent',
@@ -1973,6 +2001,10 @@ Vielen Dank, Ihr Administrator',
 		'mtalog' => [
 			'title' => 'Logdatei des MTA',
 			'description' => 'Die Logdatei des Mail Transfer Agent',
+		],
+		'mta_reload_command' => [
+			'title' => 'MTA Reload-Befehl',
+			'description' => 'Befehl, um den Mail Transfer Agent (z.B. Postfix) nach einer Konfigurationsänderung durch froxlor (Mail-SNI) neu zu laden.<br>Standard: systemctl reload postfix',
 		],
 		'system_cronconfig' => [
 			'title' => 'Cron-Konfigurationsdatei',

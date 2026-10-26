@@ -179,6 +179,83 @@ return [
 					'default' => false,
 					'save_method' => 'storeSettingField'
 				],
+				'mail_sni_enabled' => [
+					'label' => lng('serversettings.mail_sni_enabled'),
+					'settinggroup' => 'mail',
+					'varname' => 'sni_enabled',
+					'type' => 'checkbox',
+					'default' => false,
+					'save_method' => 'storeSettingFieldMailSni'
+				],
+				'mail_sni_hostnames' => [
+					'label' => lng('serversettings.mail_sni_hostnames'),
+					'settinggroup' => 'mail',
+					'varname' => 'sni_hostnames',
+					'type' => 'text',
+					'string_regexp' => '/^\s*(@|[a-z0-9]([a-z0-9.-]*[a-z0-9])?)(\s*,\s*(@|[a-z0-9]([a-z0-9.-]*[a-z0-9])?))*\s*$/i',
+					'default' => 'mail',
+					'save_method' => 'storeSettingFieldMailSni'
+				],
+				'mail_sni_acme' => [
+					'label' => lng('serversettings.mail_sni_acme'),
+					'settinggroup' => 'mail',
+					'varname' => 'sni_acme',
+					'type' => 'checkbox',
+					'default' => true,
+					'save_method' => 'storeSettingFieldMailSni'
+				],
+				'mail_sni_cert_path' => [
+					'label' => lng('serversettings.mail_sni_cert_path'),
+					'settinggroup' => 'mail',
+					'varname' => 'sni_cert_path',
+					'type' => 'text',
+					'string_type' => 'confdir',
+					'default' => '/etc/ssl/froxlor-mail-sni/',
+					'save_method' => 'storeSettingFieldMailSni',
+					'advanced_mode' => true
+				],
+				'mail_sni_postfix_map' => [
+					'label' => lng('serversettings.mail_sni_postfix_map'),
+					'settinggroup' => 'mail',
+					'varname' => 'sni_postfix_map',
+					'type' => 'text',
+					'string_type' => 'file',
+					'default' => '/etc/postfix/99-froxlor.map',
+					'save_method' => 'storeSettingFieldMailSni',
+					'advanced_mode' => true
+				],
+				'mail_sni_dovecot_conf' => [
+					'label' => lng('serversettings.mail_sni_dovecot_conf'),
+					'settinggroup' => 'mail',
+					'varname' => 'sni_dovecot_conf',
+					'type' => 'text',
+					'string_type' => 'file',
+					'default' => '/etc/dovecot/conf.d/99-froxlor-vhost.ssl.conf',
+					'save_method' => 'storeSettingFieldMailSni',
+					'advanced_mode' => true
+				],
+				'system_mta_reload_command' => [
+					'label' => lng('serversettings.mta_reload_command'),
+					'settinggroup' => 'system',
+					'varname' => 'mta_reload_command',
+					'type' => 'text',
+					'string_regexp' => '/^[a-z0-9\/\._\- ]+$/i',
+					'default' => 'systemctl reload postfix',
+					'save_method' => 'storeSettingFieldMailSni',
+					'required_otp' => true,
+					'advanced_mode' => true
+				],
+				'system_mda_reload_command' => [
+					'label' => lng('serversettings.mda_reload_command'),
+					'settinggroup' => 'system',
+					'varname' => 'mda_reload_command',
+					'type' => 'text',
+					'string_regexp' => '/^[a-z0-9\/\._\- ]+$/i',
+					'default' => 'systemctl reload dovecot',
+					'save_method' => 'storeSettingFieldMailSni',
+					'required_otp' => true,
+					'advanced_mode' => true
+				],
 			]
 		]
 	]
